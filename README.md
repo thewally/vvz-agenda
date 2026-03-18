@@ -158,11 +158,12 @@ Voeg de volgende code toe aan een pagina of widget op [vvz49.nl](https://www.vvz
 
 ```html
 <div id="vvz-agenda"></div>
-<script src="https://thewally.github.io/vvz-agenda/vvz-agenda.iife.js"></script>
+<script src="https://thewally.github.io/vvz-agenda/vvz-agenda.js"></script>
 <script>
-  VvzAgenda.init({
-    container: '#vvz-agenda',
-    activitiesUrl: 'https://thewally.github.io/vvz-agenda/activities/manifest.json'
+  window.VvzAgenda.init({
+    target: '#vvz-agenda',
+    manifestUrl: 'https://thewally.github.io/vvz-agenda/activities/manifest.json',
+    hidePast: true
   });
 </script>
 ```
