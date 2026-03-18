@@ -1,5 +1,6 @@
 import type { VvzAgendaConfig, Activity, Manifest } from "./types";
 import { parseActivities } from "./parse";
+import { filterUpcoming } from "./filter";
 import { WIDGET_CSS } from "./styles";
 
 const DUTCH_MONTHS = [
@@ -133,11 +134,7 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
   // Filter past activities
   const hidePast = config.hidePast ?? true;
   if (hidePast) {
-    const today = new Date().toISOString().slice(0, 10);
-    activities = activities.filter((a) => {
-      const endDate = a.dateEnd ?? a.date ?? a.dateStart!;
-      return endDate >= today;
-    });
+    activities = filterUpcoming(activities);
   }
 
   // Sort by date ascending
