@@ -56,6 +56,10 @@ When the project is initialized, follow these defaults unless project files esta
 - **Public API pattern**: `window.VvzAgenda.init(config)` — `config` bevat minimaal de URL naar de map met `.md`-bestanden
 - **Hosting**: GitHub Pages (`gh-pages` branch of `/docs` map), activiteiten als `.md`-bestanden in de repo
 
+## Git-beleid
+
+- **Nooit automatisch committen of pushen.** Vraag altijd eerst toestemming aan de gebruiker voordat je commit of pusht.
+
 ## Key Architectural Concerns
 
 - **Style isolation**: De widget mag geen stijlen lekken naar of overnemen van het WordPress-thema.
