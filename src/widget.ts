@@ -148,14 +148,14 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
   // Render
   if (activities.length === 0) {
     container.innerHTML = `
-      <div class="vvz-header">Agenda VVZ'49</div>
+      <div class="vvz-header">Agenda</div>
       <div class="vvz-empty">Geen komende activiteiten.</div>
     `;
     return;
   }
 
   container.innerHTML = `
-    <div class="vvz-header">Agenda VVZ'49</div>
+    <div class="vvz-header">Agenda</div>
     <div class="vvz-list">${activities.map(renderCard).join("")}</div>
   `;
 }
