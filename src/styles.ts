@@ -60,10 +60,19 @@ export const WIDGET_CSS = `
     line-height: 1.2;
   }
 
+  .vvz-date-badge .weekday {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: lowercase;
+    opacity: 0.85;
+  }
+
   .vvz-date-badge .day {
     display: block;
     font-size: 1.5rem;
     font-weight: 700;
+    line-height: 1.1;
   }
 
   .vvz-date-badge .month {

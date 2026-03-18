@@ -17,9 +17,14 @@ const DUTCH_DAYS = [
   "zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag",
 ];
 
-function formatDateBadge(isoDate: string): { day: string; month: string } {
+const DUTCH_DAYS_SHORT = [
+  "zo", "ma", "di", "wo", "do", "vr", "za",
+];
+
+function formatDateBadge(isoDate: string): { weekday: string; day: string; month: string } {
   const d = new Date(isoDate + "T00:00:00");
   return {
+    weekday: DUTCH_DAYS_SHORT[d.getDay()],
     day: String(d.getDate()),
     month: DUTCH_MONTHS_SHORT[d.getMonth()],
   };
@@ -52,6 +57,7 @@ function renderCard(activity: Activity): string {
   return `
     <div class="vvz-card">
       <div class="vvz-date-badge">
+        <span class="weekday">${badge.weekday}</span>
         <span class="day">${badge.day}</span>
         <span class="month">${badge.month}</span>
       </div>
