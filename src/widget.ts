@@ -3,36 +3,45 @@ import { parseActivities } from "./parse";
 import { filterUpcoming } from "./filter";
 import { WIDGET_CSS } from "./styles";
 
-const DUTCH_MONTHS = [
+const DUTCH_MONTHS_SHORT = [
   "jan", "feb", "mrt", "apr", "mei", "jun",
   "jul", "aug", "sep", "okt", "nov", "dec",
+];
+
+const DUTCH_MONTHS_LONG = [
+  "januari", "februari", "maart", "april", "mei", "juni",
+  "juli", "augustus", "september", "oktober", "november", "december",
+];
+
+const DUTCH_DAYS = [
+  "zondag", "maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag",
 ];
 
 function formatDateBadge(isoDate: string): { day: string; month: string } {
   const d = new Date(isoDate + "T00:00:00");
   return {
     day: String(d.getDate()),
-    month: DUTCH_MONTHS[d.getMonth()],
+    month: DUTCH_MONTHS_SHORT[d.getMonth()],
   };
 }
 
 function formatTimeRange(activity: Activity): string {
-  const { date, dateStart, dateEnd, timeStart, timeEnd } = activity;
+  const { dateStart, dateEnd, timeStart, timeEnd } = activity;
 
   if (dateStart && dateEnd) {
-    // Multi-day
+    // Multi-day: "maandag 12 augustus 09:00 uur t/m dinsdag 13 augustus 17:00 uur"
     const s = new Date(dateStart + "T00:00:00");
     const e = new Date(dateEnd + "T00:00:00");
-    let str = `${s.getDate()} ${DUTCH_MONTHS[s.getMonth()]}`;
-    if (timeStart) str += ` ${timeStart}`;
-    str += ` \u2013 ${e.getDate()} ${DUTCH_MONTHS[e.getMonth()]}`;
-    if (timeEnd) str += ` ${timeEnd}`;
-    return str;
+    let startPart = `${DUTCH_DAYS[s.getDay()]} ${s.getDate()} ${DUTCH_MONTHS_LONG[s.getMonth()]}`;
+    if (timeStart) startPart += ` ${timeStart} uur`;
+    let endPart = `${DUTCH_DAYS[e.getDay()]} ${e.getDate()} ${DUTCH_MONTHS_LONG[e.getMonth()]}`;
+    if (timeEnd) endPart += ` ${timeEnd} uur`;
+    return `${startPart} t/m ${endPart}`;
   }
 
   // Single day
-  if (timeStart && timeEnd) return `${timeStart} \u2013 ${timeEnd}`;
-  if (timeStart) return timeStart;
+  if (timeStart && timeEnd) return `${timeStart} \u2013 ${timeEnd} uur`;
+  if (timeStart) return `${timeStart} uur`;
   return "";
 }
 
