@@ -26,6 +26,8 @@ export interface Activity {
   /** For multi-day activities */
   dateStart?: string;
   dateEnd?: string;
+  /** For activities on multiple specific (non-consecutive) dates — expanded into separate Activity objects during parsing */
+  dates?: string[];
   timeStart?: string;
   timeEnd?: string;
   /** Optional link URL — makes the title a clickable link */

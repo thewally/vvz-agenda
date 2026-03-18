@@ -1,5 +1,5 @@
 import type { VvzAgendaConfig, Activity, Manifest } from "./types";
-import { parseActivity } from "./parse";
+import { parseActivities } from "./parse";
 import { WIDGET_CSS } from "./styles";
 
 const DUTCH_MONTHS = [
@@ -71,14 +71,14 @@ async function fetchManifest(url: string): Promise<string[]> {
   return data.map((f) => (f.startsWith("http") ? f : base + f));
 }
 
-async function fetchActivity(url: string): Promise<Activity | null> {
+async function fetchActivities(url: string): Promise<Activity[]> {
   try {
     const resp = await fetch(url);
-    if (!resp.ok) return null;
+    if (!resp.ok) return [];
     const raw = await resp.text();
-    return parseActivity(raw);
+    return parseActivities(raw);
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -126,9 +126,9 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
     return;
   }
 
-  // Fetch all activities in parallel, skip failures
-  const results = await Promise.all(fileUrls.map(fetchActivity));
-  let activities = results.filter((a): a is Activity => a !== null);
+  // Fetch all activities in parallel, skip failures; flatten expanded dates
+  const results = await Promise.all(fileUrls.map(fetchActivities));
+  let activities = results.flat();
 
   // Filter past activities
   const hidePast = config.hidePast ?? true;
