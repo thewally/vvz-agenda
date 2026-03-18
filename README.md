@@ -48,7 +48,7 @@ npm run build
 ```
 
 De output verschijnt in de `dist/` map:
-- `vvz-agenda.iife.js` — de zelfstandige widget-bundle
+- `vvz-agenda.js` — de zelfstandige widget-bundle
 - `index.html` — wordt door de pipeline aangevuld met `index.prod.html`
 - `activities/` — Markdown-bestanden voor de activiteiten
 
