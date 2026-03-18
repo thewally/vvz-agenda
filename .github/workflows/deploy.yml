@@ -43,6 +43,8 @@ jobs:
           sed -i 's|<script type="module">.*import "./src/main.ts";|<script src="vvz-agenda.js"></script>\n    <script>|' dist/index.html
           # Fix the manifestUrl to use the correct base path
           sed -i 's|manifestUrl: "/activities/manifest.json"|manifestUrl: "/vvz-agenda/activities/manifest.json"|' dist/index.html
+          # Copy activity Markdown files and manifest (not included automatically in lib builds)
+          cp -r public/activities dist/activities
 
       - uses: actions/upload-pages-artifact@v3
         with:
