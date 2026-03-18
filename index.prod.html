@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VVZ'49 Agenda Widget - Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        text-align: center;
+        color: #006b3f;
+        margin-bottom: 32px;
+      }
+      #agenda {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>VVZ'49 Agenda</h1>
+    <div id="agenda"></div>
+
+    <script src="vvz-agenda.js"></script>
+    <script>
+      window.VvzAgenda.init({
+        target: "#agenda",
+        manifestUrl: "/vvz-agenda/activities/manifest.json",
+        hidePast: true,
+      });
+    </script>
+  </body>
+</html>
