@@ -78,7 +78,7 @@ Activiteiten staan als Markdown-bestanden in de map `public/activities/`. Maak e
 
 ```markdown
 ---
-title: Paascup JO10
+title: Paascup 2026
 date: 2026-04-04
 timeStart: "08:30"
 timeEnd: "13:00"
