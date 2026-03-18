@@ -4,6 +4,26 @@ Een agenda-widget voor [sv VVZ'49](https://www.vvz49.nl) in Soest. De widget laa
 
 ---
 
+## Benodigde tools
+
+| Tool | Versie | Waarvoor |
+|---|---|---|
+| [Node.js](https://nodejs.org) | 18 of hoger | JavaScript runtime voor de build-tooling |
+| [npm](https://www.npmjs.com) | meegeleverd met Node.js | Pakketbeheer en het uitvoeren van scripts |
+| [Git](https://git-scm.com) | recent | Versiebeheer en pushen naar GitHub |
+
+Controleer je installatie:
+
+```bash
+node --version   # bijv. v22.0.0
+npm --version    # bijv. 10.0.0
+git --version    # bijv. git version 2.44.0
+```
+
+> Aanbevolen: installeer Node.js via [nvm](https://github.com/nvm-sh/nvm) (macOS/Linux) of [nvm-windows](https://github.com/coreybutler/nvm-windows) zodat je eenvoudig tussen versies kunt wisselen.
+
+---
+
 ## Lokaal starten
 
 **Vereisten:** Node.js 18 of hoger, npm
