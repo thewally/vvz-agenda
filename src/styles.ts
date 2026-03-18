@@ -28,6 +28,63 @@ export const WIDGET_CSS = `
     letter-spacing: 0.02em;
   }
 
+  .vvz-month-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+    scrollbar-width: thin;
+  }
+
+  .vvz-month-tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .vvz-month-tabs::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
+  }
+
+  .vvz-month-tab {
+    padding: 10px 18px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #555;
+    background: #f0f0f0;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    text-transform: capitalize;
+    font-family: inherit;
+  }
+
+  .vvz-month-tab:hover {
+    background: #e0e0e0;
+    color: #1a1a1a;
+  }
+
+  .vvz-month-tab.active {
+    background: #006B3F;
+    color: #fff;
+  }
+
+  .vvz-month-section {
+    display: none;
+  }
+
+  .vvz-month-section.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: #e0e0e0;
+  }
+
+  .vvz-month-section.active:last-child .vvz-card:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+
   .vvz-list {
     display: flex;
     flex-direction: column;

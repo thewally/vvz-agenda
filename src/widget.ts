@@ -169,8 +169,55 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
     return;
   }
 
+  // Group activities by year-month
+  const monthGroups = groupByMonth(activities);
+  const monthKeys = Array.from(monthGroups.keys());
+
+  // Build tabs
+  const tabsHtml = monthKeys
+    .map((key, i) => {
+      const [, monthIdx] = key.split("-").map(Number);
+      const label = DUTCH_MONTHS_LONG[monthIdx];
+      return `<button class="vvz-month-tab${i === 0 ? " active" : ""}" data-month="${key}">${escapeHtml(label)}</button>`;
+    })
+    .join("");
+
+  // Build month sections
+  const sectionsHtml = monthKeys
+    .map((key, i) => {
+      const items = monthGroups.get(key)!;
+      return `<div class="vvz-month-section${i === 0 ? " active" : ""}" data-month="${key}">${items.map(renderCard).join("")}</div>`;
+    })
+    .join("");
+
   container.innerHTML = `
     <div class="vvz-header">Agenda</div>
-    <div class="vvz-list">${activities.map(renderCard).join("")}</div>
+    <div class="vvz-month-tabs">${tabsHtml}</div>
+    <div class="vvz-list">${sectionsHtml}</div>
   `;
+
+  // Tab click handlers (inside shadow DOM)
+  container.querySelectorAll<HTMLButtonElement>(".vvz-month-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const month = tab.dataset.month!;
+      container.querySelectorAll<HTMLButtonElement>(".vvz-month-tab").forEach((t) => t.classList.toggle("active", t.dataset.month === month));
+      container.querySelectorAll<HTMLElement>(".vvz-month-section").forEach((s) => s.classList.toggle("active", s.dataset.month === month));
+    });
+  });
+}
+
+function groupByMonth(activities: Activity[]): Map<string, Activity[]> {
+  const map = new Map<string, Activity[]>();
+  for (const a of activities) {
+    const isoDate = a.date ?? a.dateStart!;
+    const d = new Date(isoDate + "T00:00:00");
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const list = map.get(key);
+    if (list) {
+      list.push(a);
+    } else {
+      map.set(key, [a]);
+    }
+  }
+  return map;
 }
