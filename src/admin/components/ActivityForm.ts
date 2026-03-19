@@ -64,6 +64,8 @@ export function formDataToRows(data: ActivityFormData): InsertRow[] {
 export interface ActivityFormController {
   element: HTMLElement;
   loadActivity(rows: ActivityRow[]): void;
+  isDirty(): boolean;
+  resetForm(): void;
 }
 
 export function createActivityForm(
@@ -73,6 +75,9 @@ export function createActivityForm(
 ): ActivityFormController {
   let editingId: string | null = null;
   let editingGroupId: string | null = null;
+
+  // Snapshot of loaded field values for dirty checking
+  let loadedValues: Record<string, string> = {};
 
   const form = document.createElement("form");
   form.className = "activity-form";
@@ -268,10 +273,37 @@ export function createActivityForm(
   cancelBtn.textContent = "Annuleren";
   cancelBtn.style.display = "none";
   cancelBtn.addEventListener("click", () => {
+    if (isDirty() && !confirm("Je hebt niet-opgeslagen wijzigingen. Wil je deze pagina verlaten?")) {
+      return;
+    }
     resetForm();
     onCancel?.();
   });
   form.append(cancelBtn);
+
+  function getCurrentValues(): Record<string, string> {
+    return {
+      title: (titleF as HTMLInputElement).value,
+      dateType: (dtF as HTMLSelectElement).value,
+      date: (dateF as HTMLInputElement).value,
+      dateStart: (dsF as HTMLInputElement).value,
+      dateEnd: (deF as HTMLInputElement).value,
+      dates: (dlF as HTMLTextAreaElement).value,
+      timeStart: (tsF as HTMLInputElement).value,
+      timeEnd: (teF as HTMLInputElement).value,
+      description: (descF as HTMLTextAreaElement).value,
+      url: (urlF as HTMLInputElement).value,
+    };
+  }
+
+  function snapshotValues(): void {
+    loadedValues = getCurrentValues();
+  }
+
+  function isDirty(): boolean {
+    const current = getCurrentValues();
+    return Object.keys(loadedValues).some((k) => loadedValues[k] !== current[k]);
+  }
 
   function resetForm(): void {
     editingId = null;
@@ -284,6 +316,7 @@ export function createActivityForm(
     dsW.style.display = "none";
     deW.style.display = "none";
     dlW.style.display = "none";
+    snapshotValues();
   }
 
   function loadActivity(rows: ActivityRow[]): void {
@@ -318,7 +351,11 @@ export function createActivityForm(
       (dtF as HTMLSelectElement).value = "single";
       (dateF as HTMLInputElement).value = row.date ?? "";
     }
+    snapshotValues();
   }
 
-  return { element: form, loadActivity };
+  // Initial snapshot for empty form
+  snapshotValues();
+
+  return { element: form, loadActivity, isDirty, resetForm };
 }

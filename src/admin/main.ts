@@ -113,6 +113,15 @@ function renderMain(root: HTMLElement, user: SupabaseUser): void {
 
   // Tab switching
   tabList.addEventListener("click", () => {
+    // If edit form is visible, close it (with dirty check)
+    if (editPanel.style.display !== "none") {
+      if (editForm.isDirty() && !confirm("Je hebt niet-opgeslagen wijzigingen. Wil je deze pagina verlaten?")) {
+        return;
+      }
+      editForm.resetForm();
+      editPanel.style.display = "none";
+      listPanel.style.display = "";
+    }
     tabList.className = "tab-btn tab-active";
     tabAdd.className = "tab-btn";
     listTabContainer.style.display = "";
