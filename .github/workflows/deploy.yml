@@ -41,9 +41,12 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Prepare Pages artifact
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           # Use the pre-built production HTML (correct script tags, no module import)
-          cp index.prod.html dist/index.html
+          envsubst < index.prod.html > dist/index.html
 
       - uses: actions/upload-pages-artifact@v4.0.0
         with:

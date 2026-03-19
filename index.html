@@ -30,8 +30,8 @@
 
       window.VvzAgenda.init({
         target: "#agenda",
-        supabaseUrl: "https://uqyazwatkbxpqekhombt.supabase.co",
-        supabaseAnonKey: "sb_publishable_SF9ugOVNzZL_84rHyx-Nnw_Bz4EQD5O",
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+        supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         hidePast: true,
       });
     </script>
