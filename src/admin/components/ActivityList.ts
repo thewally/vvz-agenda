@@ -112,7 +112,7 @@ export function createActivityList(
   container.className = "activity-list";
 
   const heading = document.createElement("h2");
-  heading.textContent = "Activiteiten beheren";
+  heading.textContent = "Activiteiten";
   container.append(heading);
 
   const loadingP = document.createElement("p");

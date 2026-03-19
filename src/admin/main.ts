@@ -53,17 +53,17 @@ function renderMain(root: HTMLElement, user: SupabaseUser): void {
   const tabBar = document.createElement("div");
   tabBar.className = "tab-bar";
 
+  const tabList = document.createElement("button");
+  tabList.type = "button";
+  tabList.className = "tab-btn tab-active";
+  tabList.textContent = "Activiteiten";
+
   const tabAdd = document.createElement("button");
   tabAdd.type = "button";
-  tabAdd.className = "tab-btn tab-active";
-  tabAdd.textContent = "Activiteit toevoegen";
+  tabAdd.className = "tab-btn";
+  tabAdd.textContent = "Nieuwe activiteit";
 
-  const tabManage = document.createElement("button");
-  tabManage.type = "button";
-  tabManage.className = "tab-btn";
-  tabManage.textContent = "Activiteiten beheren";
-
-  tabBar.append(tabAdd, tabManage);
+  tabBar.append(tabList, tabAdd);
 
   // Status banner (shared)
   const banner = createStatusBanner();
@@ -72,38 +72,59 @@ function renderMain(root: HTMLElement, user: SupabaseUser): void {
   const tabContent = document.createElement("div");
   tabContent.className = "tab-content";
 
-  // Build both panels
-  const activityForm = createActivityForm(banner, () => {
+  // "Nieuwe activiteit" form (always-empty add form)
+  const addForm = createActivityForm(banner, () => {
     // After save, reload list and switch to list tab
     activityList.reload();
-    tabManage.click();
+    tabList.click();
   });
-  const formPanel = activityForm.element;
+  const addPanel = addForm.element;
+  addPanel.style.display = "none";
 
+  // Edit form (inline, shown above the list)
+  const editForm = createActivityForm(banner, () => {
+    // After save, hide edit form, show list, reload
+    editPanel.style.display = "none";
+    listPanel.style.display = "";
+    activityList.reload();
+  }, () => {
+    // onCancel: hide edit form, show list
+    editPanel.style.display = "none";
+    listPanel.style.display = "";
+  });
+  const editPanel = editForm.element;
+  editPanel.style.display = "none";
+
+  // Activity list
   const activityList = createActivityList(banner, (rows) => {
-    // Switch to form tab with activity loaded for editing
-    tabAdd.click();
-    activityForm.loadActivity(rows);
+    // Show edit form inline (hide list, show edit form above)
+    editForm.loadActivity(rows);
+    listPanel.style.display = "none";
+    editPanel.style.display = "";
+    banner.hide();
   });
   const listPanel = activityList.element;
-  listPanel.style.display = "none";
 
-  tabContent.append(formPanel, listPanel);
+  // List tab contains: edit form + list (edit form hidden by default)
+  const listTabContainer = document.createElement("div");
+  listTabContainer.append(editPanel, listPanel);
+
+  tabContent.append(listTabContainer, addPanel);
 
   // Tab switching
-  tabAdd.addEventListener("click", () => {
-    tabAdd.className = "tab-btn tab-active";
-    tabManage.className = "tab-btn";
-    formPanel.style.display = "";
-    listPanel.style.display = "none";
+  tabList.addEventListener("click", () => {
+    tabList.className = "tab-btn tab-active";
+    tabAdd.className = "tab-btn";
+    listTabContainer.style.display = "";
+    addPanel.style.display = "none";
     banner.hide();
   });
 
-  tabManage.addEventListener("click", () => {
-    tabManage.className = "tab-btn tab-active";
-    tabAdd.className = "tab-btn";
-    listPanel.style.display = "";
-    formPanel.style.display = "none";
+  tabAdd.addEventListener("click", () => {
+    tabAdd.className = "tab-btn tab-active";
+    tabList.className = "tab-btn";
+    addPanel.style.display = "";
+    listTabContainer.style.display = "none";
     banner.hide();
   });
 

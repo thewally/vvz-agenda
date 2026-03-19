@@ -68,7 +68,8 @@ export interface ActivityFormController {
 
 export function createActivityForm(
   statusBanner: StatusBanner,
-  onSaved?: () => void
+  onSaved?: () => void,
+  onCancel?: () => void
 ): ActivityFormController {
   let editingId: string | null = null;
   let editingGroupId: string | null = null;
@@ -268,6 +269,7 @@ export function createActivityForm(
   cancelBtn.style.display = "none";
   cancelBtn.addEventListener("click", () => {
     resetForm();
+    onCancel?.();
   });
   form.append(cancelBtn);
 
