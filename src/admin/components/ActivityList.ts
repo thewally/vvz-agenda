@@ -106,7 +106,7 @@ function buildCard(
 
 export function createActivityList(
   statusBanner: StatusBanner,
-  onEdit?: (row: ActivityRow) => void
+  onEdit?: (rows: ActivityRow[]) => void
 ): ActivityListController {
   const container = document.createElement("div");
   container.className = "activity-list";
@@ -176,7 +176,7 @@ export function createActivityList(
           formatTime(row.time_start, row.time_end),
           row.description,
           null,
-          () => onEdit?.(row),
+          () => onEdit?.([row]),
           () => { void handleDeleteSingle(row.id, row.title, li); },
         );
         list.append(li);
@@ -191,7 +191,7 @@ export function createActivityList(
           formatTime(group.rows[0].time_start, group.rows[0].time_end),
           group.description,
           `${group.rows.length}x`,
-          () => onEdit?.(group.rows[0]),
+          () => onEdit?.(group.rows),
           () => { void handleDeleteGroup(group.groupId, group.title, li); },
         );
         list.append(li);

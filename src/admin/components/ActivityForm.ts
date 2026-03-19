@@ -1,5 +1,5 @@
 import type { ActivityFormData, ActivityRow, DateType, InsertRow } from "../types.js";
-import { insertActivities, updateActivity } from "../supabase.js";
+import { insertActivities, updateActivity, deleteActivitiesByGroupId } from "../supabase.js";
 import { StatusBanner } from "./StatusBanner.js";
 
 function createField(
@@ -63,7 +63,7 @@ export function formDataToRows(data: ActivityFormData): InsertRow[] {
 
 export interface ActivityFormController {
   element: HTMLElement;
-  loadActivity(row: ActivityRow): void;
+  loadActivity(rows: ActivityRow[]): void;
 }
 
 export function createActivityForm(
@@ -71,6 +71,7 @@ export function createActivityForm(
   onSaved?: () => void
 ): ActivityFormController {
   let editingId: string | null = null;
+  let editingGroupId: string | null = null;
 
   const form = document.createElement("form");
   form.className = "activity-form";
@@ -234,7 +235,12 @@ export function createActivityForm(
     submitBtn.textContent = "Opslaan...";
 
     try {
-      if (editingId) {
+      if (editingGroupId) {
+        // List edit: delete all old rows for this group, insert new ones
+        await deleteActivitiesByGroupId(editingGroupId);
+        await insertActivities(formDataToRows(data));
+        statusBanner.show("success", `Reeks "${data.title}" bijgewerkt.`);
+      } else if (editingId) {
         const rows = formDataToRows(data);
         await updateActivity(editingId, rows[0]);
         statusBanner.show("success", `Activiteit "${data.title}" bijgewerkt.`);
@@ -267,6 +273,7 @@ export function createActivityForm(
 
   function resetForm(): void {
     editingId = null;
+    editingGroupId = null;
     form.reset();
     heading.textContent = "Nieuwe activiteit";
     submitBtn.textContent = "Activiteit opslaan";
@@ -277,9 +284,9 @@ export function createActivityForm(
     dlW.style.display = "none";
   }
 
-  function loadActivity(row: ActivityRow): void {
+  function loadActivity(rows: ActivityRow[]): void {
     resetForm();
-    editingId = row.id;
+    const row = rows[0];
     heading.textContent = "Activiteit bewerken";
     submitBtn.textContent = "Wijziging opslaan";
     cancelBtn.style.display = "";
@@ -290,12 +297,14 @@ export function createActivityForm(
     (teF as HTMLInputElement).value = row.time_end ?? "";
     (urlF as HTMLInputElement).value = row.url ?? "";
 
-    if (row.dates_item) {
+    if (row.dates_item !== null) {
+      editingGroupId = row.group_id;
       (dtF as HTMLSelectElement).value = "list";
       dateW.style.display = "none";
       dlW.style.display = "";
-      (dlF as HTMLTextAreaElement).value = row.dates_item;
+      (dlF as HTMLTextAreaElement).value = rows.map((r) => r.dates_item ?? "").filter(Boolean).join("\n");
     } else if (row.date_start) {
+      editingId = row.id;
       (dtF as HTMLSelectElement).value = "range";
       dateW.style.display = "none";
       dsW.style.display = "";
@@ -303,6 +312,7 @@ export function createActivityForm(
       (dsF as HTMLInputElement).value = row.date_start;
       (deF as HTMLInputElement).value = row.date_end ?? "";
     } else {
+      editingId = row.id;
       (dtF as HTMLSelectElement).value = "single";
       (dateF as HTMLInputElement).value = row.date ?? "";
     }

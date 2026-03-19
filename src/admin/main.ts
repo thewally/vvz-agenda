@@ -80,10 +80,10 @@ function renderMain(root: HTMLElement, user: SupabaseUser): void {
   });
   const formPanel = activityForm.element;
 
-  const activityList = createActivityList(banner, (row) => {
+  const activityList = createActivityList(banner, (rows) => {
     // Switch to form tab with activity loaded for editing
     tabAdd.click();
-    activityForm.loadActivity(row);
+    activityForm.loadActivity(rows);
   });
   const listPanel = activityList.element;
   listPanel.style.display = "none";
