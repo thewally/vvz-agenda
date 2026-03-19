@@ -1,5 +1,6 @@
 import { createLoginForm } from "./components/LoginForm.js";
 import { createActivityForm } from "./components/ActivityForm.js";
+import { createActivityList } from "./components/ActivityList.js";
 import { createStatusBanner } from "./components/StatusBanner.js";
 import { getAuthenticatedUser } from "./github.js";
 import { GitHubUser } from "./types.js";
@@ -25,7 +26,7 @@ function renderLogin(root: HTMLElement): void {
   const loginForm = createLoginForm((token, user) => {
     sessionStorage.setItem(TOKEN_KEY, token);
     root.textContent = "";
-    renderForm(root, token, user);
+    renderMain(root, token, user);
   });
   root.append(loginForm);
 }
@@ -38,7 +39,7 @@ function renderLoading(root: HTMLElement, token: string): void {
   void getAuthenticatedUser(token)
     .then((user) => {
       root.textContent = "";
-      renderForm(root, token, user);
+      renderMain(root, token, user);
     })
     .catch(() => {
       sessionStorage.removeItem(TOKEN_KEY);
@@ -47,7 +48,8 @@ function renderLoading(root: HTMLElement, token: string): void {
     });
 }
 
-function renderForm(root: HTMLElement, token: string, user: GitHubUser): void {
+function renderMain(root: HTMLElement, token: string, user: GitHubUser): void {
+  // User header
   const userHeader = document.createElement("div");
   userHeader.className = "user-header";
 
@@ -73,10 +75,54 @@ function renderForm(root: HTMLElement, token: string, user: GitHubUser): void {
 
   userHeader.append(avatar, userName, logoutBtn);
 
-  const banner = createStatusBanner();
-  const form = createActivityForm(token, banner);
+  // Tab bar
+  const tabBar = document.createElement("div");
+  tabBar.className = "tab-bar";
 
-  root.append(userHeader, banner.element, form);
+  const tabAdd = document.createElement("button");
+  tabAdd.type = "button";
+  tabAdd.className = "tab-btn tab-active";
+  tabAdd.textContent = "Activiteit toevoegen";
+
+  const tabManage = document.createElement("button");
+  tabManage.type = "button";
+  tabManage.className = "tab-btn";
+  tabManage.textContent = "Activiteiten beheren";
+
+  tabBar.append(tabAdd, tabManage);
+
+  // Status banner (shared)
+  const banner = createStatusBanner();
+
+  // Tab content area
+  const tabContent = document.createElement("div");
+  tabContent.className = "tab-content";
+
+  // Build both panels
+  const formPanel = createActivityForm(token, banner);
+  const listPanel = createActivityList(token, banner);
+  listPanel.style.display = "none";
+
+  tabContent.append(formPanel, listPanel);
+
+  // Tab switching
+  tabAdd.addEventListener("click", () => {
+    tabAdd.className = "tab-btn tab-active";
+    tabManage.className = "tab-btn";
+    formPanel.style.display = "";
+    listPanel.style.display = "none";
+    banner.hide();
+  });
+
+  tabManage.addEventListener("click", () => {
+    tabManage.className = "tab-btn tab-active";
+    tabAdd.className = "tab-btn";
+    listPanel.style.display = "";
+    formPanel.style.display = "none";
+    banner.hide();
+  });
+
+  root.append(userHeader, tabBar, banner.element, tabContent);
 }
 
 renderApp();

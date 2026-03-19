@@ -60,6 +60,40 @@ export async function getFile(
   return { sha: data.sha, content };
 }
 
+export async function getFileSha(token: string, path: string): Promise<string> {
+  const res = await fetch(
+    `${API_BASE}/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}?ref=${CONFIG.branch}`,
+    { headers: headers(token) }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sha for ${path}: ${res.status}`);
+  }
+  const data = await res.json();
+  return (data as { sha: string }).sha;
+}
+
+export async function deleteFile(
+  token: string,
+  path: string,
+  sha: string,
+  message: string
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`,
+    {
+      method: "DELETE",
+      headers: headers(token),
+      body: JSON.stringify({ message, sha, branch: CONFIG.branch }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(
+      `Failed to delete ${path}: ${res.status} ${(err as Record<string, string>).message ?? ""}`
+    );
+  }
+}
+
 export async function createOrUpdateFile(
   token: string,
   path: string,
