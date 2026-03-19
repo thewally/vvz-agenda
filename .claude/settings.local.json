@@ -23,7 +23,8 @@
       "WebFetch(domain:www.knvb.nl)",
       "WebFetch(domain:www.voetbal.nl)",
       "WebSearch",
-      "Bash(find /Users/arjen/Projects/Personal/vvz-agenda -type f \\\\\\(-name *auth* -o -name *admin* -o -name *login* -o -name *user* \\\\\\))"
+      "Bash(find /Users/arjen/Projects/Personal/vvz-agenda -type f \\\\\\(-name *auth* -o -name *admin* -o -name *login* -o -name *user* \\\\\\))",
+      "WebFetch(domain:api.github.com)"
     ]
   }
 }
