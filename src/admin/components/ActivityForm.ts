@@ -1,7 +1,5 @@
-import { ActivityFormData, DateType } from "../types.js";
-import { buildFilename } from "../slugify.js";
-import { serializeActivity } from "../frontmatter.js";
-import { getConfig, getFile, createOrUpdateFile } from "../github.js";
+import type { ActivityFormData, DateType, InsertRow } from "../types.js";
+import { insertActivities } from "../supabase.js";
 import { StatusBanner } from "./StatusBanner.js";
 
 function createField(
@@ -25,8 +23,45 @@ function createField(
   return { wrapper, field };
 }
 
+export function formDataToRows(data: ActivityFormData): InsertRow[] {
+  const base = {
+    title: data.title,
+    description: data.description,
+    date: null as string | null,
+    date_start: null as string | null,
+    date_end: null as string | null,
+    dates_item: null as string | null,
+    group_id: null as string | null,
+    time_start: data.timeStart ?? null,
+    time_end: data.timeEnd ?? null,
+    url: data.url ?? null,
+    sort_date: "",
+  };
+
+  if (data.dateType === "single") {
+    return [{ ...base, date: data.date!, sort_date: data.date! }];
+  }
+
+  if (data.dateType === "range") {
+    return [{
+      ...base,
+      date_start: data.dateStart!,
+      date_end: data.dateEnd ?? null,
+      sort_date: data.dateStart!,
+    }];
+  }
+
+  // list
+  const groupId = crypto.randomUUID();
+  return data.dates!.map((d) => ({
+    ...base,
+    dates_item: d,
+    group_id: groupId,
+    sort_date: d,
+  }));
+}
+
 export function createActivityForm(
-  token: string,
   statusBanner: StatusBanner
 ): HTMLElement {
   const form = document.createElement("form");
@@ -191,44 +226,7 @@ export function createActivityForm(
     submitBtn.textContent = "Opslaan...";
 
     try {
-      const config = getConfig();
-      const filename = buildFilename(data);
-      const filePath = `${config.activitiesPath}/${filename}`;
-      const mdContent = serializeActivity(data);
-
-      // PUT new .md file
-      await createOrUpdateFile(
-        token,
-        filePath,
-        mdContent,
-        `feat: add activity ${data.title}`
-      );
-
-      // Update manifest.json
-      const manifestPath = `${config.activitiesPath}/manifest.json`;
-      let manifest: string[] = [];
-      let manifestSha: string | undefined;
-
-      try {
-        const existing = await getFile(token, manifestPath);
-        manifest = JSON.parse(existing.content) as string[];
-        manifestSha = existing.sha;
-      } catch {
-        // manifest doesn't exist yet
-      }
-
-      if (!manifest.includes(filename)) {
-        manifest.push(filename);
-        manifest.sort();
-      }
-
-      await createOrUpdateFile(
-        token,
-        manifestPath,
-        JSON.stringify(manifest, null, 2) + "\n",
-        `chore: update manifest with ${filename}`,
-        manifestSha
-      );
+      await insertActivities(formDataToRows(data));
 
       statusBanner.show("success", `Activiteit "${data.title}" opgeslagen.`);
       form.reset();

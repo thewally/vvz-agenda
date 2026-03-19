@@ -1,8 +1,24 @@
-import { getConfig, getFile, getFileSha, deleteFile, createOrUpdateFile } from "../github.js";
+import { listActivities, deleteActivityById, deleteActivitiesByGroupId } from "../supabase.js";
+import type { ActivityRow } from "../types.js";
 import { StatusBanner } from "./StatusBanner.js";
 
+const DUTCH_MONTHS_SHORT = [
+  "jan", "feb", "mrt", "apr", "mei", "jun",
+  "jul", "aug", "sep", "okt", "nov", "dec",
+];
+
+function formatSortDate(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  return `${d.getDate()} ${DUTCH_MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+interface ActivityGroup {
+  groupId: string;
+  title: string;
+  rows: ActivityRow[];
+}
+
 export function createActivityList(
-  token: string,
   statusBanner: StatusBanner
 ): HTMLElement {
   const container = document.createElement("div");
@@ -21,40 +37,82 @@ export function createActivityList(
   list.style.display = "none";
   container.append(list);
 
-  void loadActivities();
+  void loadAll();
 
   return container;
 
-  async function loadActivities(): Promise<void> {
+  async function loadAll(): Promise<void> {
     try {
-      const config = getConfig();
-      const manifestPath = `${config.activitiesPath}/manifest.json`;
-      const { content } = await getFile(token, manifestPath);
-      const filenames = JSON.parse(content) as string[];
+      const rows = await listActivities();
 
       list.textContent = "";
 
-      if (filenames.length === 0) {
+      if (rows.length === 0) {
         const emptyP = document.createElement("p");
         emptyP.textContent = "Geen activiteiten gevonden.";
         loadingP.replaceWith(emptyP);
         return;
       }
 
-      for (const filename of filenames) {
+      // Group rows by group_id where applicable
+      const groups: ActivityGroup[] = [];
+      const singles: ActivityRow[] = [];
+      const groupMap = new Map<string, ActivityRow[]>();
+
+      for (const row of rows) {
+        if (row.group_id) {
+          let arr = groupMap.get(row.group_id);
+          if (!arr) {
+            arr = [];
+            groupMap.set(row.group_id, arr);
+          }
+          arr.push(row);
+        } else {
+          singles.push(row);
+        }
+      }
+
+      for (const [groupId, groupRows] of groupMap) {
+        groups.push({ groupId, title: groupRows[0].title, rows: groupRows });
+      }
+
+      // Render singles
+      for (const row of singles) {
         const li = document.createElement("li");
         li.className = "activity-list-item";
 
         const nameSpan = document.createElement("span");
         nameSpan.className = "activity-list-name";
-        nameSpan.textContent = filename;
+        nameSpan.textContent = `${row.title} — ${formatSortDate(row.sort_date)}`;
 
         const deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
         deleteBtn.className = "delete-btn";
         deleteBtn.textContent = "Verwijderen";
         deleteBtn.addEventListener("click", () => {
-          void handleDelete(filename, li);
+          void handleDeleteSingle(row.id, row.title, li);
+        });
+
+        li.append(nameSpan, deleteBtn);
+        list.append(li);
+      }
+
+      // Render groups
+      for (const group of groups) {
+        const li = document.createElement("li");
+        li.className = "activity-list-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "activity-list-name";
+        const dates = group.rows.map((r) => formatSortDate(r.sort_date)).join(", ");
+        nameSpan.textContent = `${group.title} (${group.rows.length}x: ${dates})`;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.textContent = "Verwijderen";
+        deleteBtn.addEventListener("click", () => {
+          void handleDeleteGroup(group.groupId, group.title, li);
         });
 
         li.append(nameSpan, deleteBtn);
@@ -69,51 +127,42 @@ export function createActivityList(
     }
   }
 
-  async function handleDelete(filename: string, li: HTMLElement): Promise<void> {
-    if (!confirm(`Weet je zeker dat je '${filename}' wilt verwijderen?`)) {
-      return;
-    }
+  async function handleDeleteSingle(id: string, title: string, li: HTMLElement): Promise<void> {
+    if (!confirm(`Weet je zeker dat je '${title}' wilt verwijderen?`)) return;
 
     statusBanner.hide();
-    const config = getConfig();
-    const filePath = `${config.activitiesPath}/${filename}`;
-
     try {
-      // Get sha of the activity file
-      const sha = await getFileSha(token, filePath);
-
-      // Delete the activity file
-      await deleteFile(token, filePath, sha, `chore: delete activity ${filename}`);
-
-      // Update manifest
-      const manifestPath = `${config.activitiesPath}/manifest.json`;
-      const existing = await getFile(token, manifestPath);
-      const manifest = JSON.parse(existing.content) as string[];
-      const updated = manifest.filter((f) => f !== filename);
-
-      await createOrUpdateFile(
-        token,
-        manifestPath,
-        JSON.stringify(updated, null, 2) + "\n",
-        `chore: remove ${filename} from manifest`,
-        existing.sha
-      );
-
-      // Remove from DOM
+      await deleteActivityById(id);
       li.remove();
-
-      // Check if list is now empty
-      if (list.children.length === 0) {
-        const emptyP = document.createElement("p");
-        emptyP.textContent = "Geen activiteiten gevonden.";
-        list.before(emptyP);
-        list.style.display = "none";
-      }
-
-      statusBanner.show("success", `'${filename}' verwijderd.`);
+      checkEmpty();
+      statusBanner.show("success", `'${title}' verwijderd.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Onbekende fout";
       statusBanner.show("error", `Verwijderen mislukt: ${msg}`);
+    }
+  }
+
+  async function handleDeleteGroup(groupId: string, title: string, li: HTMLElement): Promise<void> {
+    if (!confirm(`Weet je zeker dat je alle activiteiten in deze reeks wilt verwijderen?`)) return;
+
+    statusBanner.hide();
+    try {
+      await deleteActivitiesByGroupId(groupId);
+      li.remove();
+      checkEmpty();
+      statusBanner.show("success", `Reeks '${title}' verwijderd.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Onbekende fout";
+      statusBanner.show("error", `Verwijderen mislukt: ${msg}`);
+    }
+  }
+
+  function checkEmpty(): void {
+    if (list.children.length === 0) {
+      const emptyP = document.createElement("p");
+      emptyP.textContent = "Geen activiteiten gevonden.";
+      list.before(emptyP);
+      list.style.display = "none";
     }
   }
 }

@@ -1,8 +1,8 @@
-import { verifyAccess, getAuthenticatedUser } from "../github.js";
-import { GitHubUser } from "../types.js";
+import { signIn } from "../supabase.js";
+import type { SupabaseUser } from "../types.js";
 
 export function createLoginForm(
-  onSuccess: (token: string, user: GitHubUser) => void
+  onSuccess: (user: SupabaseUser) => void
 ): HTMLElement {
   const container = document.createElement("div");
   container.className = "login-card";
@@ -10,23 +10,34 @@ export function createLoginForm(
   const heading = document.createElement("h2");
   heading.textContent = "Inloggen";
 
-  const field = document.createElement("div");
-  field.className = "form-field";
+  const emailField = document.createElement("div");
+  emailField.className = "form-field";
 
-  const label = document.createElement("label");
-  label.textContent = "Toegangstoken";
-  label.htmlFor = "pat-input";
+  const emailLabel = document.createElement("label");
+  emailLabel.textContent = "E-mailadres";
+  emailLabel.htmlFor = "email-input";
 
-  const input = document.createElement("input");
-  input.type = "password";
-  input.id = "pat-input";
-  input.placeholder = "ghp_...";
-  input.autocomplete = "off";
+  const emailInput = document.createElement("input");
+  emailInput.type = "email";
+  emailInput.id = "email-input";
+  emailInput.placeholder = "naam@voorbeeld.nl";
+  emailInput.autocomplete = "email";
 
-  const helper = document.createElement("p");
-  helper.className = "login-helper";
-  helper.innerHTML =
-    'Nog geen token? <a href="https://github.com/settings/tokens/new?scopes=repo&description=VVZ+Agenda+Beheer" target="_blank" rel="noopener noreferrer">Maak een token aan op GitHub</a>';
+  emailField.append(emailLabel, emailInput);
+
+  const passField = document.createElement("div");
+  passField.className = "form-field";
+
+  const passLabel = document.createElement("label");
+  passLabel.textContent = "Wachtwoord";
+  passLabel.htmlFor = "password-input";
+
+  const passInput = document.createElement("input");
+  passInput.type = "password";
+  passInput.id = "password-input";
+  passInput.autocomplete = "current-password";
+
+  passField.append(passLabel, passInput);
 
   const errorMsg = document.createElement("p");
   errorMsg.className = "login-error";
@@ -37,13 +48,14 @@ export function createLoginForm(
   button.textContent = "Inloggen";
   button.className = "login-btn";
 
-  field.append(label, input, helper, errorMsg);
-  container.append(heading, field, button);
+  container.append(heading, emailField, passField, errorMsg, button);
 
   async function handleSubmit(): Promise<void> {
-    const token = input.value.trim();
-    if (!token) {
-      showError("Vul een token in.");
+    const email = emailInput.value.trim();
+    const password = passInput.value;
+
+    if (!email || !password) {
+      showError("Vul e-mailadres en wachtwoord in.");
       return;
     }
 
@@ -52,14 +64,8 @@ export function createLoginForm(
     errorMsg.style.display = "none";
 
     try {
-      const hasAccess = await verifyAccess(token);
-      if (!hasAccess) {
-        showError("Je hebt geen schrijfrechten op deze repository.");
-        return;
-      }
-
-      const user = await getAuthenticatedUser(token);
-      onSuccess(token, user);
+      const user = await signIn(email, password);
+      onSuccess(user);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Onbekende fout.";
       showError(message);
@@ -78,7 +84,7 @@ export function createLoginForm(
     void handleSubmit();
   });
 
-  input.addEventListener("keydown", (e) => {
+  passInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       void handleSubmit();
     }

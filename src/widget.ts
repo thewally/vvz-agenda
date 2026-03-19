@@ -1,6 +1,5 @@
-import type { VvzAgendaConfig, Activity, Manifest } from "./types";
-import { parseActivities } from "./parse";
-import { filterUpcoming } from "./filter";
+import type { VvzAgendaConfig, Activity } from "./types";
+import { fetchActivitiesFromSupabase } from "./supabase";
 import { WIDGET_CSS } from "./styles";
 
 const DUTCH_MONTHS_SHORT = [
@@ -34,7 +33,6 @@ function formatTimeRange(activity: Activity): string {
   const { dateStart, dateEnd, timeStart, timeEnd } = activity;
 
   if (dateStart && dateEnd) {
-    // Multi-day: "maandag 12 augustus 09:00 uur t/m dinsdag 13 augustus 17:00 uur"
     const s = new Date(dateStart + "T00:00:00");
     const e = new Date(dateEnd + "T00:00:00");
     let startPart = `${DUTCH_DAYS[s.getDay()]} ${s.getDate()} ${DUTCH_MONTHS_LONG[s.getMonth()]}`;
@@ -44,7 +42,6 @@ function formatTimeRange(activity: Activity): string {
     return `${startPart} t/m ${endPart}`;
   }
 
-  // Single day
   if (timeStart && timeEnd) return `${timeStart} \u2013 ${timeEnd} uur`;
   if (timeStart) return `${timeStart} uur`;
   return "";
@@ -78,26 +75,6 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-async function fetchManifest(url: string): Promise<string[]> {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to fetch manifest: ${resp.status}`);
-  const data: Manifest = await resp.json();
-  // Resolve relative paths against manifest URL
-  const base = url.substring(0, url.lastIndexOf("/") + 1);
-  return data.map((f) => (f.startsWith("http") ? f : base + f));
-}
-
-async function fetchActivities(url: string): Promise<Activity[]> {
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return [];
-    const raw = await resp.text();
-    return parseActivities(raw);
-  } catch {
-    return [];
-  }
-}
-
 export async function initWidget(config: VvzAgendaConfig): Promise<void> {
   const target =
     typeof config.target === "string"
@@ -109,7 +86,6 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
     return;
   }
 
-  // Create Shadow DOM host
   const shadow = target.attachShadow({ mode: "open" });
   const style = document.createElement("style");
   style.textContent = WIDGET_CSS;
@@ -123,16 +99,13 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
   `;
   shadow.appendChild(container);
 
-  // Resolve file URLs
-  let fileUrls: string[] = [];
+  let activities: Activity[];
   try {
-    if (config.files) {
-      fileUrls = config.files;
-    } else if (config.manifestUrl) {
-      fileUrls = await fetchManifest(config.manifestUrl);
-    } else {
-      throw new Error("Provide either 'files' or 'manifestUrl' in config.");
-    }
+    activities = await fetchActivitiesFromSupabase(
+      config.supabaseUrl,
+      config.supabaseAnonKey,
+      config.hidePast ?? true
+    );
   } catch (err) {
     container.innerHTML = `
       <div class="vvz-header">Agenda VVZ'49</div>
@@ -141,19 +114,6 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
     console.error("[VvzAgenda]", err);
     return;
   }
-
-  // Fetch all activities in parallel, skip failures; flatten expanded dates
-  const results = await Promise.all(fileUrls.map(fetchActivities));
-  let activities = results.flat();
-
-  // Filter past activities
-  const hidePast = config.hidePast ?? true;
-  if (hidePast) {
-    activities = filterUpcoming(activities);
-  }
-
-  // Sort by date ascending
-  activities.sort((a, b) => a.sortDate.localeCompare(b.sortDate));
 
   // Limit
   if (config.maxItems && config.maxItems > 0) {
@@ -196,7 +156,7 @@ export async function initWidget(config: VvzAgendaConfig): Promise<void> {
     <div class="vvz-list">${sectionsHtml}</div>
   `;
 
-  // Tab click handlers (inside shadow DOM)
+  // Tab click handlers
   container.querySelectorAll<HTMLButtonElement>(".vvz-month-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       const month = tab.dataset.month!;
