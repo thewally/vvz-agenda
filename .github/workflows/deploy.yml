@@ -41,8 +41,6 @@ jobs:
         run: |
           # Use the pre-built production HTML (correct script tags, no module import)
           cp index.prod.html dist/index.html
-          # Copy activity Markdown files and manifest (not included automatically in lib builds)
-          cp -r public/activities dist/activities
 
       - uses: actions/upload-pages-artifact@v4.0.0
         with:
