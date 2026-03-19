@@ -36,6 +36,9 @@ jobs:
 
       - run: npm run build
         name: Build IIFE bundle
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Prepare Pages artifact
         run: |
