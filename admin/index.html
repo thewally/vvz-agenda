@@ -209,36 +209,116 @@
         list-style: none;
         padding: 0;
         margin: 0;
-      }
-
-      .activity-list-item {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.6rem 0.75rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
-        background: #fff;
+        flex-direction: column;
+        gap: 0.5rem;
       }
 
-      .activity-list-name {
-        font-size: 0.9rem;
-        word-break: break-all;
+      .activity-card {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #fff;
+        transition: border-color 0.15s;
+      }
+
+      .activity-card:hover {
+        border-color: #cbd5e1;
+      }
+
+      .activity-card-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .activity-card-title-row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .activity-card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-card-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.1rem 0.45rem;
+        border-radius: 9999px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .activity-card-meta {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 0.2rem;
+      }
+
+      .activity-card-desc {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        flex-shrink: 0;
+      }
+
+      .edit-btn {
+        background: #fff;
+        color: #2563eb;
+        border: 1px solid #2563eb;
+        font-size: 0.78rem;
+        padding: 0.3rem 0.7rem;
+        margin: 0;
+      }
+
+      .edit-btn:hover {
+        background: #eff6ff;
       }
 
       .delete-btn {
-        background: #dc2626;
-        color: #fff;
-        font-size: 0.8rem;
+        background: #fff;
+        color: #dc2626;
+        border: 1px solid #e5e7eb;
+        font-size: 0.78rem;
         padding: 0.3rem 0.7rem;
         margin: 0;
-        flex-shrink: 0;
-        margin-left: 0.5rem;
       }
 
       .delete-btn:hover {
-        background: #b91c1c;
+        background: #fef2f2;
+        border-color: #fca5a5;
+      }
+
+      .cancel-btn {
+        background: #fff;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+        margin-left: 0.5rem;
+      }
+
+      .cancel-btn:hover {
+        background: #f9fafb;
       }
     </style>
   </head>

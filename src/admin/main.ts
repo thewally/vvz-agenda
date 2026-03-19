@@ -73,8 +73,19 @@ function renderMain(root: HTMLElement, user: SupabaseUser): void {
   tabContent.className = "tab-content";
 
   // Build both panels
-  const formPanel = createActivityForm(banner);
-  const listPanel = createActivityList(banner);
+  const activityForm = createActivityForm(banner, () => {
+    // After save, reload list and switch to list tab
+    activityList.reload();
+    tabManage.click();
+  });
+  const formPanel = activityForm.element;
+
+  const activityList = createActivityList(banner, (row) => {
+    // Switch to form tab with activity loaded for editing
+    tabAdd.click();
+    activityForm.loadActivity(row);
+  });
+  const listPanel = activityList.element;
   listPanel.style.display = "none";
 
   tabContent.append(formPanel, listPanel);

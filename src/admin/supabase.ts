@@ -43,6 +43,11 @@ export async function insertActivities(rows: InsertRow[]): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function updateActivity(id: string, row: Partial<InsertRow>): Promise<void> {
+  const { error } = await supabase.from("activities").update(row).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function deleteActivityById(id: string): Promise<void> {
   const { error } = await supabase.from("activities").delete().eq("id", id);
   if (error) throw new Error(error.message);

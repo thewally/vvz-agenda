@@ -1,5 +1,5 @@
-import type { ActivityFormData, DateType, InsertRow } from "../types.js";
-import { insertActivities } from "../supabase.js";
+import type { ActivityFormData, ActivityRow, DateType, InsertRow } from "../types.js";
+import { insertActivities, updateActivity } from "../supabase.js";
 import { StatusBanner } from "./StatusBanner.js";
 
 function createField(
@@ -61,9 +61,17 @@ export function formDataToRows(data: ActivityFormData): InsertRow[] {
   }));
 }
 
+export interface ActivityFormController {
+  element: HTMLElement;
+  loadActivity(row: ActivityRow): void;
+}
+
 export function createActivityForm(
-  statusBanner: StatusBanner
-): HTMLElement {
+  statusBanner: StatusBanner,
+  onSaved?: () => void
+): ActivityFormController {
+  let editingId: string | null = null;
+
   const form = document.createElement("form");
   form.className = "activity-form";
 
@@ -226,15 +234,17 @@ export function createActivityForm(
     submitBtn.textContent = "Opslaan...";
 
     try {
-      await insertActivities(formDataToRows(data));
+      if (editingId) {
+        const rows = formDataToRows(data);
+        await updateActivity(editingId, rows[0]);
+        statusBanner.show("success", `Activiteit "${data.title}" bijgewerkt.`);
+      } else {
+        await insertActivities(formDataToRows(data));
+        statusBanner.show("success", `Activiteit "${data.title}" opgeslagen.`);
+      }
 
-      statusBanner.show("success", `Activiteit "${data.title}" opgeslagen.`);
-      form.reset();
-      // Reset date field visibility
-      dateW.style.display = "";
-      dsW.style.display = "none";
-      deW.style.display = "none";
-      dlW.style.display = "none";
+      resetForm();
+      onSaved?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Onbekende fout";
       statusBanner.show("error", `Opslaan mislukt: ${msg}`);
@@ -244,5 +254,59 @@ export function createActivityForm(
     }
   });
 
-  return form;
+  // Cancel edit button
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "cancel-btn";
+  cancelBtn.textContent = "Annuleren";
+  cancelBtn.style.display = "none";
+  cancelBtn.addEventListener("click", () => {
+    resetForm();
+  });
+  form.append(cancelBtn);
+
+  function resetForm(): void {
+    editingId = null;
+    form.reset();
+    heading.textContent = "Nieuwe activiteit";
+    submitBtn.textContent = "Activiteit opslaan";
+    cancelBtn.style.display = "none";
+    dateW.style.display = "";
+    dsW.style.display = "none";
+    deW.style.display = "none";
+    dlW.style.display = "none";
+  }
+
+  function loadActivity(row: ActivityRow): void {
+    resetForm();
+    editingId = row.id;
+    heading.textContent = "Activiteit bewerken";
+    submitBtn.textContent = "Wijziging opslaan";
+    cancelBtn.style.display = "";
+
+    (titleF as HTMLInputElement).value = row.title;
+    (descF as HTMLTextAreaElement).value = row.description;
+    (tsF as HTMLInputElement).value = row.time_start ?? "";
+    (teF as HTMLInputElement).value = row.time_end ?? "";
+    (urlF as HTMLInputElement).value = row.url ?? "";
+
+    if (row.dates_item) {
+      (dtF as HTMLSelectElement).value = "list";
+      dateW.style.display = "none";
+      dlW.style.display = "";
+      (dlF as HTMLTextAreaElement).value = row.dates_item;
+    } else if (row.date_start) {
+      (dtF as HTMLSelectElement).value = "range";
+      dateW.style.display = "none";
+      dsW.style.display = "";
+      deW.style.display = "";
+      (dsF as HTMLInputElement).value = row.date_start;
+      (deF as HTMLInputElement).value = row.date_end ?? "";
+    } else {
+      (dtF as HTMLSelectElement).value = "single";
+      (dateF as HTMLInputElement).value = row.date ?? "";
+    }
+  }
+
+  return { element: form, loadActivity };
 }
