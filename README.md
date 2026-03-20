@@ -1,10 +1,12 @@
 # VVZ'49 Agenda
 
-Een agenda-widget voor [sv VVZ'49](https://www.vvz49.nl) in Soest. De widget laadt activiteiten uit Markdown-bestanden en toont ze als datumgesorteerde kaarten. De widget kan ingebed worden in de WordPress-site van VVZ'49 via een `<script>`-tag.
+Een agenda-widget voor [sv VVZ'49](https://www.vvz49.nl) in Soest. De widget laadt activiteiten uit een **Supabase**-database en toont ze als datumgesorteerde kaarten, gegroepeerd per maand. De widget kan ingebed worden in de WordPress-site van VVZ'49 via een `<script>`-tag.
+
+Het project bevat ook een **admin interface** waarmee beheerders activiteiten kunnen toevoegen, bewerken en verwijderen.
 
 ---
 
-## Benodigde tools
+## Vereisten
 
 | Tool | Versie | Waarvoor |
 |---|---|---|
@@ -20,141 +22,108 @@ npm --version    # bijv. 10.0.0
 git --version    # bijv. git version 2.44.0
 ```
 
-> Aanbevolen: installeer Node.js via [nvm](https://github.com/nvm-sh/nvm) (macOS/Linux) of [nvm-windows](https://github.com/coreybutler/nvm-windows) zodat je eenvoudig tussen versies kunt wisselen.
+> Aanbevolen: installeer Node.js via [nvm](https://github.com/nvm-sh/nvm) (macOS/Linux) of [nvm-windows](https://github.com/coreybutler/nvm-windows).
 
 ---
 
-## Lokaal starten
-
-**Vereisten:** Node.js 18 of hoger, npm
+## Installatie
 
 ```bash
-# Installeer dependencies
 npm install
+```
 
-# Start de ontwikkelserver
+### Omgevingsvariabelen
+
+Maak een `.env`-bestand aan in de projectroot met de Supabase-credentials:
+
+```env
+VITE_SUPABASE_URL=https://jouw-project.supabase.co
+VITE_SUPABASE_ANON_KEY=jouw-anon-key
+```
+
+Deze variabelen worden door Vite ingelezen via `import.meta.env`. Zie [docs/technische-documentatie.md](docs/technische-documentatie.md) voor meer details over de Supabase-configuratie en GitHub Secrets.
+
+---
+
+## Ontwikkeling
+
+### Widget (dev server)
+
+```bash
 npm run dev
 ```
 
-De app is daarna bereikbaar op [http://localhost:5173/vvz-agenda/](http://localhost:5173/vvz-agenda/).
+Start de Vite dev server op [http://localhost:5173/vvz-agenda/](http://localhost:5173/vvz-agenda/). Gebruikt `index.html` met de widget-initialisatie.
 
----
-
-## Builden
+### Admin interface (dev server)
 
 ```bash
-# Type-check en bouw de productie-bundle
-npm run build
+npm run dev:admin
 ```
 
-De output verschijnt in de `dist/` map:
-- `vvz-agenda.js` — de zelfstandige widget-bundle
-- `index.html` — wordt door de pipeline aangevuld met `index.prod.html`
-- `activities/` — Markdown-bestanden voor de activiteiten
+Start de admin interface vanuit `admin/index.html`.
 
----
-
-## Tests uitvoeren
+### Tests
 
 ```bash
 npm test
 ```
 
+Gebruikt [Vitest](https://vitest.dev/) als testraamwerk. Configuratie staat in `vitest.config.ts`.
+
+### Typecheck
+
+```bash
+npx tsc --noEmit
+```
+
+TypeScript is geconfigureerd met `strict: true`.
+
+---
+
+## Bouwen
+
+```bash
+npm run build
+```
+
+Dit voert achtereenvolgens uit:
+
+1. `tsc` -- typecheck
+2. `npm run build:widget` -- bouwt de IIFE-bundle (`dist/vvz-agenda.js`)
+3. `npm run build:admin` -- bouwt de admin interface (`dist/admin/`)
+
+### Afzonderlijk bouwen
+
+```bash
+npm run build:widget   # alleen de widget-bundle
+npm run build:admin    # alleen de admin interface
+```
+
+### Output
+
+De `dist/` map bevat na het bouwen:
+
+| Bestand/map | Omschrijving |
+|---|---|
+| `vvz-agenda.js` | Zelfstandige IIFE widget-bundle |
+| `index.html` | Demopagina (gegenereerd uit `index.prod.html` met `envsubst`) |
+| `admin/` | Admin interface (HTML + JS) |
+
 ---
 
 ## Deployment
 
-De app wordt automatisch gedeployed naar GitHub Pages via de GitHub Actions pipeline (`.github/workflows/deploy.yml`) bij iedere push naar de `main` branch.
+De app wordt automatisch gedeployed naar **GitHub Pages** via de GitHub Actions pipeline (`.github/workflows/deploy.yml`) bij iedere push naar de `main` branch.
 
-Live URL: [https://thewally.github.io/vvz-agenda/](https://thewally.github.io/vvz-agenda/)
+### Live URL's
 
----
-
-## Activiteiten toevoegen
-
-Activiteiten staan als Markdown-bestanden in de map `public/activities/`. Maak een nieuw `.md`-bestand aan met de bestandsnaam `YYYY-MM-DD-naam-van-activiteit.md`.
-
-### Enkeldaagse activiteit
-
-```markdown
----
-title: Paascup 2026
-date: 2026-04-04
-timeStart: "08:30"
-timeEnd: "13:00"
-description: Jaarlijkse Paascup op sportpark De Meent.
-url: https://www.vvz49.nl/paascup
----
-```
-
-### Meerdaagse activiteit (aaneengesloten)
-
-```markdown
----
-title: Jeugdkamp 2026
-dateStart: 2026-06-12
-dateEnd: 2026-06-13
-timeStart: "09:00"
-timeEnd: "17:00"
-description: Jaarlijks jeugdkamp van sv VVZ '49.
----
-```
-
-### Activiteit op meerdere losse datums
-
-Gebruik `dates` (een lijst) voor activiteiten die meerdere keren terugkomen op vaste datums:
-
-```markdown
----
-title: Techniektraining JO08 t/m JO10
-dates:
-  - 2026-03-20
-  - 2026-03-27
-  - 2026-04-10
-timeStart: "16:00"
-timeEnd: "17:00"
-description: Techniektraining op vrijdagmiddag aan de Eemweg.
-url: https://www.vvz49.nl/techniektraining
----
-```
-
-### Velden
-
-| Veld | Verplicht | Omschrijving |
-|---|---|---|
-| `title` | ja | Naam van de activiteit |
-| `date` | ja* | Datum (enkeldaagse activiteit) |
-| `dateStart` + `dateEnd` | ja* | Begin- en einddatum (meerdaagse aaneengesloten activiteit) |
-| `dates` | ja* | Lijst van losse datums (terugkerende activiteit) |
-| `timeStart` | nee | Starttijd, bijv. `"14:00"` |
-| `timeEnd` | nee | Eindtijd, bijv. `"16:00"` |
-| `description` | nee | Korte omschrijving |
-| `url` | nee | Link naar meer informatie (opent in hetzelfde tabblad) |
-
-*Gebruik precies één van `date`, `dateStart`/`dateEnd` of `dates`.
-
-> Verlopen activiteiten worden automatisch verborgen. Een activiteit die vandaag plaatsvindt wordt nog wel getoond.
-
-### Manifest bijwerken
-
-Na het toevoegen van een nieuw bestand moet het manifest bijgewerkt worden zodat de widget het bestand kan vinden. Het manifest staat in `public/activities/manifest.json`:
-
-```json
-{
-  "files": [
-    "2026-04-04-paascup.md",
-    "2026-06-12-jeugdkamp-2026.md"
-  ]
-}
-```
-
-Voeg de bestandsnaam van de nieuwe activiteit toe aan de `files`-lijst.
+- **Widget demo:** [https://thewally.github.io/vvz-agenda/](https://thewally.github.io/vvz-agenda/)
+- **Admin interface:** [https://thewally.github.io/vvz-agenda/admin/](https://thewally.github.io/vvz-agenda/admin/)
 
 ---
 
 ## Insluiten op de WordPress-site
-
-Voeg de volgende code toe aan een pagina of widget op [vvz49.nl](https://www.vvz49.nl):
 
 ```html
 <div id="vvz-agenda"></div>
@@ -162,8 +131,21 @@ Voeg de volgende code toe aan een pagina of widget op [vvz49.nl](https://www.vvz
 <script>
   window.VvzAgenda.init({
     target: '#vvz-agenda',
-    manifestUrl: 'https://thewally.github.io/vvz-agenda/activities/manifest.json',
+    supabaseUrl: 'https://jouw-project.supabase.co',
+    supabaseAnonKey: 'jouw-anon-key',
     hidePast: true
   });
 </script>
 ```
+
+Zie [docs/technische-documentatie.md](docs/technische-documentatie.md) voor de volledige configuratie-API.
+
+---
+
+## Documentatie
+
+| Document | Doelgroep | Inhoud |
+|---|---|---|
+| [docs/technische-documentatie.md](docs/technische-documentatie.md) | Ontwikkelaars, technisch beheerders | Architectuur, Supabase, database, API, projectstructuur |
+| [docs/admin-handleiding.md](docs/admin-handleiding.md) | Beheerders (niet-technisch) | Inloggen, activiteiten beheren |
+| [docs/gebruiker-handleiding.md](docs/gebruiker-handleiding.md) | Eindgebruikers | Wat de widget toont, hoe te navigeren |
