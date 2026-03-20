@@ -34,7 +34,20 @@ vvz-agenda/
 
 ## Authenticatie
 
-De admin interface gebruikt **Supabase Auth** met e-mail/wachtwoord-login. Accounts worden aangemaakt door de projectbeheerder in het [Supabase dashboard](https://supabase.com/dashboard).
+De admin interface gebruikt **Supabase Auth** met e-mail/wachtwoord-login. Alleen gebruikers die zijn aangemaakt in het Supabase dashboard kunnen inloggen op de admin interface — er is geen zelfregistratie.
+
+### Beheerders toevoegen
+
+1. Ga naar het [Supabase dashboard](https://supabase.com/dashboard) en open je project.
+2. Navigeer naar **Authentication** → **Users**.
+3. Klik op **Add user** → **Create new user**.
+4. Vul het e-mailadres en een wachtwoord in en klik op **Create user**.
+
+De nieuwe beheerder kan nu inloggen op de admin interface (`/admin/`) met deze gegevens.
+
+> **Let op:** je kunt hier ook bestaande beheerders verwijderen of hun wachtwoord resetten. Verwijderde gebruikers kunnen direct niet meer inloggen.
+
+### Auth-functies
 
 Relevante functies in `src/admin/supabase.ts`:
 
