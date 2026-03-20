@@ -4,6 +4,8 @@ Een agenda-widget voor [sv VVZ'49](https://www.vvz49.nl) in Soest. De widget laa
 
 Het project bevat ook een **admin interface** waarmee beheerders activiteiten kunnen toevoegen, bewerken en verwijderen.
 
+> Zie [docs/index.md](docs/index.md) voor de volledige documentatie (gebruiker-handleiding, admin-handleiding en technische documentatie).
+
 ---
 
 ## Vereisten
